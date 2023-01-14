@@ -1,0 +1,15 @@
+version: "3.7"
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: minimalapiserver
+    user: root
+    ports:
+    #   host-port:container-port 
+      - "1433:1433"
+    environment:
+      # SA_USERNAME: sa
+      SA_PASSWORD: Dev1234!
+      ACCEPT_EULA: Y
+    volumes:
+      - ./volumes/data2:/var/opt/mssql/data
