@@ -7,6 +7,7 @@
  
  - https://www.docker.com/products/docker-desktop/
  - https://learn.microsoft.com/pt-br/windows/wsl/install
+ -
  
     2. With docker running, open de command prompt inside the folder of project ~/DemoMinimalAPI and run command "docker-compose up" to create docker image
 	
