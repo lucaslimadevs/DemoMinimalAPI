@@ -1,6 +1,10 @@
 # DemoMinimalAPI
  Demonstration of a minimal API with database connection and Indentity authentication.
  
+## Author
+
+- [@lucaslimadevs](https://www.github.com/lucaslimadevs)
+ 
 ## To Run Api
 
 ### 1. Install docker 
