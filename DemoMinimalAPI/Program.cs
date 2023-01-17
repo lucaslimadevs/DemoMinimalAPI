@@ -1,7 +1,12 @@
 using DemoMinimalAPI.Data;
 using DemoMinimalAPI.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MiniValidation;
+using NetDevPack.Identity;
+using NetDevPack.Identity.Jwt;
+using NetDevPack.Identity.Model;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +16,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MinimalContextDb>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddIdentityEntityFrameworkContextConfiguration(options =>  //NetDevPack.Identity package with all configuration for identity context 
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+    b => b.MigrationsAssembly("DemoMinimalAPI")));
+
+builder.Services.AddIdentityConfiguration();
+builder.Services.AddJwtConfiguration(builder.Configuration, "AppJwtSettings");
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -19,7 +31,48 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseAuthConfiguration();
 app.UseHttpsRedirection();
+
+app.MapPost("/registro", 
+    async (
+        SignInManager<IdentityUser> signInManager,
+        UserManager<IdentityUser> userManager,
+        IOptions<AppJwtSettings> appJwtSettings,
+        RegisterUser registerUser) => 
+    {
+        if (registerUser == null)
+            return Results.BadRequest("Usuário não foi informado");
+
+        if (!MiniValidator.TryValidate(registerUser, out var errors))
+            return Results.ValidationProblem(errors);
+
+        var user = new IdentityUser
+        {
+            UserName = registerUser.Email,
+            Email = registerUser.Email,
+            EmailConfirmed = true
+        };
+
+        var result = await userManager.CreateAsync(user, registerUser.Password);
+
+        if (!result.Succeeded)
+            return Results.BadRequest(result.Errors);
+
+        var jwt = new JwtBuilder()
+                    .WithUserManager(userManager)
+                    .WithJwtSettings(appJwtSettings.Value)
+                    .WithEmail(user.Email)
+                    .WithJwtClaims()
+                    .WithUserRoles()
+                    .BuildUserResponse();
+
+        return Results.Ok(jwt);
+    }).ProducesValidationProblem()
+    .Produces<Fornecedor>(StatusCodes.Status200OK)
+    .Produces<Fornecedor>(StatusCodes.Status400BadRequest)
+    .WithName("RegistroUsuario")
+    .WithTags("Usuario");
 
 app.MapGet("/fornecedor", async (
     MinimalContextDb context) =>
