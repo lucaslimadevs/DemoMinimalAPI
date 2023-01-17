@@ -5,6 +5,9 @@
 
     1. Install docker and WSL2
  
+ - https://www.docker.com/products/docker-desktop/
+ - https://learn.microsoft.com/pt-br/windows/wsl/install
+ 
     2. With docker running, open de command prompt inside the folder of project ~/DemoMinimalAPI and run command "docker-compose up" to create docker image
 	
 ![image](https://user-images.githubusercontent.com/117870158/212793919-0341e1e6-9036-44dc-badd-40cbb218a425.png)
