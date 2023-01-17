@@ -40,23 +40,70 @@ app.MapGet("/fornecedor/{id}", async (
     .WithName("GetFonecedoresById")
     .WithTags("Fornecedor");
 
-app.MapPost("/fornecedor", async (
-    MinimalContextDb context,
-    Fornecedor fornecedor) =>
-{
-    if (!MiniValidator.TryValidate(fornecedor, out var errors)) //package MiniValidation, minimalistic validation library
-        return Results.ValidationProblem(errors);
+app.MapPost("/fornecedor", 
+    async (MinimalContextDb context, 
+           Fornecedor fornecedor) =>
+    {
+        if (!MiniValidator.TryValidate(fornecedor, out var errors)) //package MiniValidation, minimalistic validation library
+            return Results.ValidationProblem(errors);
 
-    await context.Fornecedores.AddAsync(fornecedor);
-    var result = await context.SaveChangesAsync();
+        await context.Fornecedores.AddAsync(fornecedor);
+        var result = await context.SaveChangesAsync();
 
-    return result > 0
-        ? Results.Created($"/fornecedor/{fornecedor.Id}", fornecedor)
-        : Results.BadRequest("Houve um problema ao salvar registro");
-})
+        return result > 0
+            ? Results.Created($"/fornecedor/{fornecedor.Id}", fornecedor)
+            : Results.BadRequest("Houve um problema ao salvar registro");
+
+    }).ProducesValidationProblem()
     .Produces<Fornecedor>(StatusCodes.Status201Created) //documentation for swagger
     .Produces<Fornecedor>(StatusCodes.Status400BadRequest)
-    .WithName("PostFonecedor")
+    .WithName("PostFornecedor")
+    .WithTags("Fornecedor");
+
+app.MapPut("/fornecedor/{id}", 
+    async (Guid id,
+           MinimalContextDb context,
+           Fornecedor fornecedor) =>
+    { 
+        var fornecedorBanco = await context.Fornecedores.FindAsync(id);
+        if (fornecedorBanco == null) return Results.NotFound();
+
+        if (!MiniValidator.TryValidate(fornecedor, out var errors)) 
+            return Results.ValidationProblem(errors);
+
+        context.Fornecedores.Update(fornecedor);
+        var result = await context.SaveChangesAsync();
+
+        return result > 0 ?
+            Results.NoContent() : 
+            Results.BadRequest("Houve um problema ao salvar o registro");
+
+    }).ProducesValidationProblem()
+    .Produces<Fornecedor>(StatusCodes.Status204NoContent) //documentation for swagger
+    .Produces<Fornecedor>(StatusCodes.Status400BadRequest)
+    .Produces<Fornecedor>(StatusCodes.Status404NotFound)
+    .WithName("PutFornecedor")
+    .WithTags("Fornecedor");
+
+app.MapDelete("/fornecedor/{id}",
+    async (Guid id,
+           MinimalContextDb context) =>
+    {
+        var fornecedor = await context.Fornecedores.FindAsync(id);
+        if (fornecedor == null) return Results.NotFound();
+
+        context.Fornecedores.Remove(fornecedor);
+        var result = await context.SaveChangesAsync();
+
+        return result > 0 ?
+            Results.NoContent() :
+            Results.BadRequest("Houve um problema ao remover o registro");
+
+    }).ProducesValidationProblem()
+    .Produces<Fornecedor>(StatusCodes.Status204NoContent) //documentation for swagger
+    .Produces<Fornecedor>(StatusCodes.Status400BadRequest)
+    .Produces<Fornecedor>(StatusCodes.Status404NotFound)
+    .WithName("DeleteFornecedor")
     .WithTags("Fornecedor");
 
 app.Run();
