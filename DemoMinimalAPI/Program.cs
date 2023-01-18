@@ -12,6 +12,8 @@ using NetDevPack.Identity.Model;
 
 var builder = WebApplication.CreateBuilder(args);
 
+#region Configure services
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -60,6 +62,10 @@ builder.Services.AddJwtConfiguration(builder.Configuration, "AppJwtSettings");
 
 var app = builder.Build();
 
+#endregion
+
+#region Configure pipeline
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -68,6 +74,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthConfiguration();
 app.UseHttpsRedirection();
+
+#endregion
+
+#region Actions
 
 app.MapPost("/registro", [AllowAnonymous]
     async (
@@ -233,3 +243,5 @@ app.MapDelete("/fornecedor/{id}", [Authorize]
     .WithTags("Fornecedor");
 
 app.Run();
+
+#endregion
