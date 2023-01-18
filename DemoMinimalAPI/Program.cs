@@ -1,8 +1,10 @@
 using DemoMinimalAPI.Data;
 using DemoMinimalAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 using MiniValidation;
 using NetDevPack.Identity;
 using NetDevPack.Identity.Jwt;
@@ -11,7 +13,40 @@ using NetDevPack.Identity.Model;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Minimal API Sample",
+        Description = "Developed by Lucas Lima - @lucaslimadevs - https://github.com/lucaslimadevs",
+        Contact = new OpenApiContact { Name = "Lucas Lima", Email = "lucaslima.devs@gmail.com" },        
+    });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "Insira o token JWT desta maneira: Bearer {seu token}",
+        Name = "Authorization",
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 builder.Services.AddDbContext<MinimalContextDb>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -34,7 +69,7 @@ if (app.Environment.IsDevelopment())
 app.UseAuthConfiguration();
 app.UseHttpsRedirection();
 
-app.MapPost("/registro", 
+app.MapPost("/registro", [AllowAnonymous]
     async (
         SignInManager<IdentityUser> signInManager,
         UserManager<IdentityUser> userManager,
@@ -68,19 +103,55 @@ app.MapPost("/registro",
                     .BuildUserResponse();
 
         return Results.Ok(jwt);
-    }).ProducesValidationProblem()
-    .Produces<Fornecedor>(StatusCodes.Status200OK)
-    .Produces<Fornecedor>(StatusCodes.Status400BadRequest)
+    })
+    .ProducesValidationProblem()
+    .Produces(StatusCodes.Status200OK)
+    .Produces(StatusCodes.Status400BadRequest)
     .WithName("RegistroUsuario")
     .WithTags("Usuario");
 
-app.MapGet("/fornecedor", async (
+app.MapPost("/login", [AllowAnonymous]
+    async (
+        SignInManager<IdentityUser> signInManager,
+        UserManager<IdentityUser> userManager,
+        IOptions<AppJwtSettings> appJwtSettings,
+        LoginUser loginUser) =>
+    {
+        if (loginUser == null)
+            return Results.BadRequest("Usuário não foi informado");
+
+        if (!MiniValidator.TryValidate(loginUser, out var errors))
+            return Results.ValidationProblem(errors);
+       
+
+        var result = await signInManager.PasswordSignInAsync(loginUser.Email, loginUser.Password, false, true);
+
+        if (!result.Succeeded)
+            return Results.BadRequest("Usuário ou senha inválidos");
+
+        var jwt = new JwtBuilder()
+                    .WithUserManager(userManager)
+                    .WithJwtSettings(appJwtSettings.Value)
+                    .WithEmail(loginUser.Email)
+                    .WithJwtClaims()
+                    .WithUserRoles()
+                    .BuildUserResponse();
+
+        return Results.Ok(jwt);
+    })
+    .ProducesValidationProblem()
+    .Produces(StatusCodes.Status200OK)
+    .Produces(StatusCodes.Status400BadRequest)
+    .WithName("LoginUsuario")
+    .WithTags("Usuario");
+
+app.MapGet("/fornecedor", [Authorize] async (
     MinimalContextDb context) =>
     await context.Fornecedores.ToListAsync())
     .WithName("GetFonecedores")
     .WithTags("Fornecedor"); //tags name (similar controller name)
 
-app.MapGet("/fornecedor/{id}", async (
+app.MapGet("/fornecedor/{id}", [Authorize] async (
     Guid id, 
     MinimalContextDb context) =>
     await context.Fornecedores.FindAsync(id)
@@ -93,7 +164,7 @@ app.MapGet("/fornecedor/{id}", async (
     .WithName("GetFonecedoresById")
     .WithTags("Fornecedor");
 
-app.MapPost("/fornecedor", 
+app.MapPost("/fornecedor", [Authorize]
     async (MinimalContextDb context, 
            Fornecedor fornecedor) =>
     {
@@ -113,7 +184,7 @@ app.MapPost("/fornecedor",
     .WithName("PostFornecedor")
     .WithTags("Fornecedor");
 
-app.MapPut("/fornecedor/{id}", 
+app.MapPut("/fornecedor/{id}", [Authorize]
     async (Guid id,
            MinimalContextDb context,
            Fornecedor fornecedor) =>
@@ -140,7 +211,7 @@ app.MapPut("/fornecedor/{id}",
     .WithName("PutFornecedor")
     .WithTags("Fornecedor");
 
-app.MapDelete("/fornecedor/{id}",
+app.MapDelete("/fornecedor/{id}", [Authorize]
     async (Guid id,
            MinimalContextDb context) =>
     {
@@ -157,7 +228,7 @@ app.MapDelete("/fornecedor/{id}",
     }).ProducesValidationProblem()
     .Produces<Fornecedor>(StatusCodes.Status204NoContent) //documentation for swagger
     .Produces<Fornecedor>(StatusCodes.Status400BadRequest)
-    .Produces<Fornecedor>(StatusCodes.Status404NotFound)
+    .Produces<Fornecedor>(StatusCodes.Status404NotFound)    
     .WithName("DeleteFornecedor")
     .WithTags("Fornecedor");
 
