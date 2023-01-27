@@ -5,7 +5,7 @@
 
 | :placard: showcase.Dev |     |
 | -------------  | --- |
-| :sparkles: Nome        | **DemoMinimalAPI**
+| :sparkles: Name        | **DemoMinimalAPI**
 | :label: Back-End | ASP.NET Core 6, C#, SQL Server
 | :rocket: API         | https://localhost:5001 **follow instructions bellow**
  
