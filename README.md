@@ -1,6 +1,14 @@
 # DemoMinimalAPI
  Demonstration of a minimal API with database connection and Indentity authentication.
  
+ This project is currently in development using ASP.NET CORE 6 and SQL Server.
+
+| :placard: showcase.Dev |     |
+| -------------  | --- |
+| :sparkles: Nome        | **DemoMinimalAPI**
+| :label: Back-End | ASP.NET Core 6, C#, SQL Server
+| :rocket: API         | https://localhost:5001 **follow instructions bellow**
+ 
 ## Author
 
 - [@lucaslimadevs](https://www.github.com/lucaslimadevs)
