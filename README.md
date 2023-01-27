@@ -7,7 +7,7 @@
 | -------------  | --- |
 | :sparkles: Name        | **DemoMinimalAPI**
 | :label: Back-End | ASP.NET Core 6, C#, SQL Server
-| :rocket: API         | https://localhost:5001 **follow instructions bellow**
+| :rocket: API         | https://localhost:7199 **follow instructions bellow**
  
 ## Author
 
