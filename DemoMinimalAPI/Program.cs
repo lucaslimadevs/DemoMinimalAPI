@@ -21,7 +21,9 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Minimal API Sample",
         Description = "Developed by Lucas Lima - @lucaslimadevs - https://github.com/lucaslimadevs",
-        Contact = new OpenApiContact { Name = "Lucas Lima", Email = "lucaslima.devs@gmail.com" },        
+        Contact = new OpenApiContact { Name = "Lucas Lima", Email = "lucaslima.devs@gmail.com" },
+        TermsOfService = new Uri("https://opensource.org/license/mit/"),
+        License = new OpenApiLicense { Name = "MIT", Url = new Uri("https://opensource.org/license/mit/") }
     });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
